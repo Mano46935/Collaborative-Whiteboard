@@ -25,3 +25,10 @@ This project was built to learn:
 * React state management
 * Collaborative application architecture
 * Canvas drawing techniques
+
+
+## Device Pixel Ratio(DPR) Canvas Rendering
+
+* Implemented DPR-aware canvas rendering to maintain consistent visual dimensions while improving rendering sharpness across different display resolutions.
+* Visual representation with dpr=1(standard rendering) and with dpr=3 using the same drawing.
+  <img width="1402" height="487" alt="image" src="https://github.com/user-attachments/assets/7951c869-e2d0-4393-82ee-c695673efa45" />
