@@ -1,12 +1,12 @@
 import { useNavigate, Link } from "react-router-dom";
-
+import { SERVER_URL } from "../services/api.js";
 export default function Navbar() {
     const navigate = useNavigate();
 
     const handleLogout = async () => {
         try {
             const response = await fetch(
-                "http://localhost:5000/api/login/logout",
+                `${SERVER_URL}/api/login/logout`,
                 {
                     method: "POST",
                     credentials: "include"
