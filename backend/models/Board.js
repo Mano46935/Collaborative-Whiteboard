@@ -24,6 +24,14 @@ const BoardSchema=new Schema(
     {
         name:{type:String,default:"Untitled"},
         strokes:{type:[StrokeSchema],default:[]},
+        visibility:{type:String,enum:["public","private"],default:"public",required:true},
+        ownerId:{
+            type:Schema.Types.ObjectId,
+            ref:"User",
+            required:true
+        },
+        allowedUsers:[{type:Schema.Types.ObjectId,ref:"User"}],
+    inviteCode:{type:String,unique:true,  sparse: true}
     }
     ,
     {timestamps:true}

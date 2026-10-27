@@ -23,12 +23,13 @@ export default function Whiteboard(){
   const [tool,setTool]=useState("pen");
   const [color,setColor]=useState("#1e1e1e");
   const [width,setWidth]=useState(4);
+  const[inviteCode,setInviteCode]=useState("");
+  const[visibility,setVisibility]=useState("public");
+  const [isOwner, setIsOwner] = useState(false);
+const [isAllowed, setIsAllowed] = useState(false);
   const lastCursorEmit=useRef(0);//Last instance when cursor pos was sent.
   //Load boards metadata
-  useEffect(()=>{
-    api.getBoard(boardId).then((b)=>setBoardName(b.name))
-    .catch((err)=>setError(err.message));
-  },[boardId]);
+  
   useEffect(()=>{
     const onConnect=()=>setSelfId(socket.id);
     const onInitBoard=({strokes:initialStrokes,users:initialUsers})=>{
@@ -94,16 +95,31 @@ export default function Whiteboard(){
      };
 
   },[boardId]);
-  const handleJoin=(e)=>{
+ const handleJoin = async (e) => {
     e.preventDefault();
-    const name=userName.trim()||"Guest";
-    setUserName(name);
-    socket.connect();
-    socket.once("connect",()=>{
-      socket.emit("join-board",{boardId,userName:name,color:myColor});
-    });
-    setJoined(true);
-  };
+    setError("");
+
+    try {
+        // Verify invite code
+        if (visibility === "private" && !isOwner && !isAllowed) {
+            const res = await api.joinBoard(boardId, inviteCode.trim());
+            if (res.inviteCode) setInviteCode(res.inviteCode);
+            setIsAllowed(true);
+        }
+
+        const name = userName.trim() || "Guest";
+        setUserName(name);
+
+        socket.connect();
+        socket.once("connect", () => {
+            socket.emit("join-board", { boardId, userName: name, color: myColor });
+        });
+
+        setJoined(true);
+    } catch (err) {
+        setError(err.message);
+    }
+};
   //---Canvas callbacks---
   const handleLocalStrokeStart=useCallback(
     (stroke)=>{
@@ -148,13 +164,33 @@ const handleClear = () => {
 
   const handleUndo = () => socket.emit("undo-last", { boardId });
 
-  const handleLeave = () => navigate("/");
-
+  const handleLeave = () => navigate("/Home");
+useEffect(() => {
+    api.getBoardMetadata(boardId)
+        .then((meta) => {
+            setBoardName(meta.name);
+            setVisibility(meta.visibility);
+            setIsOwner(meta.isOwner);
+            setIsAllowed(meta.isAllowed);
+            if (meta.inviteCode) {
+                setInviteCode(meta.inviteCode);
+            }
+        })
+        .catch((err) => setError(err.message));
+}, [boardId]);
   if (!joined) {
+    
     return (
       <div className="join-screen">
         <form className="join-card" onSubmit={handleJoin}>
+          
           <h2>Join "{boardName}"</h2>
+          {visibility==="private" && !isOwner && !isAllowed &&(
+            <input placeholder="Enter invite code"
+            value={inviteCode}
+            onChange={(e)=>setInviteCode(e.target.value)}
+            required />
+          )}
           <p className="muted">Pick a display name so others can see who's drawing.</p>
           <input
             autoFocus
@@ -184,6 +220,18 @@ const handleClear = () => {
         onLeave={handleLeave}
         boardName={boardName}
       />
+        {visibility === "private" && inviteCode && (
+            <div id="inviteCodebar">
+                <span> Invite Code: {inviteCode}</span>
+                <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(inviteCode)}
+                    style={{ padding: "2px 8px", cursor: "pointer" }}
+                >
+                    Copy Code
+                </button>
+            </div>
+        )}
       <div className="board-area">
         <Canvas
           strokes={strokes}

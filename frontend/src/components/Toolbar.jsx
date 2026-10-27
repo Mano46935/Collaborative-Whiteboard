@@ -7,7 +7,7 @@ export default function Toolbar({tool,setTool,color,setColor,width,setWidth,onCl
                 <button className="icon-btn" onClick={onLeave} title="Back to boards">
                        ←
                 </button>
-                <span className="board-title">{boardName}</span>
+                <span className="board-title">Board Title: {boardName}</span>
             </div>
             <div className="toolbar-section">
                 <button className={`tool-btn ${tool==="pen"?"active":""}`}
